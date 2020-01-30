@@ -26,7 +26,7 @@ export default class ComponentController extends Controller {
     } else {
       ctx.body = {
         code: 1,
-        message: '数据库操作失败',
+        msg: '数据库操作失败',
       };
     }
 

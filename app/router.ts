@@ -7,7 +7,7 @@ export default (app: Application) => {
 
   Object.keys(config).forEach(key => {
     const value: ConfigValue = config[key];
-    console.log(value.cb)
+
     router[value.method](key, value.cb);
-  })
+  });
 };

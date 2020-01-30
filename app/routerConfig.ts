@@ -25,6 +25,21 @@ const setConfigFn = (app: Application) => {
         img: 'string',
       },
     },
+    '/page/create': {
+      cb: controller.page.create,
+      method: 'get',
+      rule: {
+        name: 'string',
+      },
+    },
+    '/page/construct': {
+      cb: controller.page.construct,
+      method: 'post',
+      rule: {
+        page: 'string',
+        components: 'array',
+      },
+    },
   };
 };
 
