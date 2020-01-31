@@ -80,7 +80,7 @@ export default class PageService extends Service {
     }).join('\n');
     content = content.replace('/** replaceholder: use */', componentUse);
     fs.writeFileSync(demoFilePath, content, 'utf-8');
-    code = shell.exec(`cd ${pageFilePath} && npm run build`);
+    code = shell.exec(`cd ${pageFilePath} && npm run build`).code;
     if (code !== 0) {
       return {
         code: 1,
@@ -88,16 +88,18 @@ export default class PageService extends Service {
       };
     }
 
-    // 将打包过后的html内容作为响应体返回
-
     if (code !== 0) {
       return {
         code: 1,
         msg: '页面构建失败',
       };
     } else {
+      // todo：将打包过后的html内容作为响应体返回，或者返回一个线上可以访问的地址
+      const libFilePath = path.resolve(pageFilePath, './lib/index.html');
+      const htmlData = fs.readFileSync(libFilePath, 'utf-8');
       return {
         code: 0,
+        data: htmlData,
         msg: 'success',
       };
     }
