@@ -13,11 +13,11 @@ export default class ComponentController extends Controller {
     };
   }
 
-  public async create() {
+  public async editor() {
     const { ctx } = this;
-    const options = ctx.request.body;
+    const { id, nameCh, nameEn, image, description, props } = ctx.request.body;
 
-    const result = await ctx.service.component.create(options);
+    const result = await ctx.service.component.editor({ nameCh, nameEn, image, description }, props, id);
     if (result.affectedRows) {
       ctx.body = {
         code: 0,

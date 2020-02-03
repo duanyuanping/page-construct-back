@@ -16,13 +16,13 @@ const setConfigFn = (app: Application) => {
     '/': controller.home.index,
     // 组件管理
     '/component/list': controller.component.getList,
-    '/component/create': {
-      cb: controller.component.create,
+    '/component/editor': {
+      cb: controller.component.editor,
       method: 'post',
       rule: {
         nameCh: 'string',
         nameEn: 'string',
-        img: 'string',
+        image: 'string',
       },
     },
     '/page/create': {
