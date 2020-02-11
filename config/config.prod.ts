@@ -5,7 +5,7 @@ export default () => {
     mysql: {
       client: {
         // host
-        host: '129.226.186.136',
+        host: '127.0.0.1',
         // 端口号
         port: '3306',
         // 用户名
