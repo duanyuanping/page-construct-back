@@ -3,8 +3,9 @@ import { Controller } from 'egg';
 export default class ComponentController extends Controller {
   public async getList() {
     const { ctx } = this;
+    const { name } = ctx.request.query;
 
-    const result = await ctx.service.component.getList();
+    const result = await ctx.service.component.getList({ nameEn: name });
 
     ctx.body = {
         code : 0,
@@ -15,9 +16,9 @@ export default class ComponentController extends Controller {
 
   public async editor() {
     const { ctx } = this;
-    const { id, nameCh, nameEn, image, description, props } = ctx.request.body;
+    const { id, nameCh, nameEn, image, description, props, defaultProps={} } = ctx.request.body;
 
-    const result = await ctx.service.component.editor({ nameCh, nameEn, image, description }, props, id);
+    const result = await ctx.service.component.editor({ nameCh, nameEn, image, description }, props, defaultProps, id);
     if (result.affectedRows) {
       ctx.body = {
         code: 0,

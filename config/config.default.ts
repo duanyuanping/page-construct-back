@@ -17,6 +17,9 @@ export default (appInfo: EggAppInfo) => {
     },
   };
 
+  // 域名
+  config.domain = 'http://www.test.com';
+
   // add your special config in here
   const bizConfig = {
     sourceUrl: `https://github.com/eggjs/examples/tree/master/${appInfo.name}`,

@@ -25,6 +25,7 @@ const setConfigFn = (app: Application) => {
         image: 'string',
       },
     },
+    '/page/list': controller.page.getList,
     '/page/create': {
       cb: controller.page.create,
       method: 'get',
@@ -32,12 +33,63 @@ const setConfigFn = (app: Application) => {
         name: 'string',
       },
     },
+    '/page/delete': {
+      cb: controller.page.delete,
+      method: 'get',
+      rule: {
+        id: 'string',
+      },
+    },
     '/page/construct': {
       cb: controller.page.construct,
       method: 'post',
       rule: {
-        page: 'string',
+        uid: 'string',
         components: 'array',
+      },
+    },
+    '/page/code': {
+      cb: controller.page.getCode,
+      method: 'get',
+      rule: {
+        uid: 'string',
+      },
+    },
+    '/page/preview': {
+      cb: controller.page.preview,
+      method: 'get',
+      rule: {
+        uid: 'string',
+      },
+    },
+    '/page/online': {
+      cb: controller.page.online,
+      method: 'get',
+      rule: {
+        uid: 'string',
+        onlineTime: 'string',
+      },
+    },
+    '/page/check': {
+      cb: controller.page.check,
+      method: 'get',
+      rule: {
+        uid: 'string',
+      },
+    },
+    '/page/detail': {
+      cb: controller.page.detail,
+      method: 'get',
+      rule: {
+        uid: 'string',
+      },
+    },
+    '/page/update': {
+      cb: controller.page.update,
+      method: 'post',
+      rule: {
+        id: 'number',
+        name: 'string',
       },
     },
   };

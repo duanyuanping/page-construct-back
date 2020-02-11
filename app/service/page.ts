@@ -2,48 +2,122 @@ import { Service } from 'egg';
 import * as shell from 'shelljs';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as uuidv3 from 'uuid/v3';
+import * as uuidv4 from 'uuid/v4';
+import { deleteFolder } from '../public/utils';
 
 interface ConstructParams {
   name: string;
   props: any;
 }
 
-const pagesFolderPath = path.resolve(__dirname, '../../../pages');
+interface ListParamsType {
+  current: string;
+  pageSize: string;
+}
+
+const pageFolderPath = path.resolve(__dirname, '../../../pages');
+const pageDevelopmentPath = path.resolve(pageFolderPath, './development');
+const pagePreviewPath = path.resolve(pageFolderPath, './preview');
+const pageOnlinePath = path.resolve(pageFolderPath, './online');
 
 const changeName = (name: string) => name.toLowerCase().replace(/(-|_)/g, ' ').replace(/( |^)[a-z]/g, (L: string) => L.toUpperCase()).replace(/ /g, '');
 
 export default class PageService extends Service {
+  public async getDetail(uid: string) {
+    const data = await this.app.mysql.get('pages', { uid });
+
+    return {
+      code: 0,
+      msg: 'success',
+      data,
+    };
+  }
+
+  public async update(id: string, params: { name: string; onlineTime: Date | string; offlineTime: Date | string; }) {
+    await this.app.mysql.update('pages', { id, ...params, updateTime: this.app.mysql.literals.now });
+
+    return {
+      code: 0,
+      msg: 'success',
+    };
+  }
+
+  public async getList(params: ListParamsType) {
+    const { current, pageSize, ...otherParams } = params;
+
+    const [ list, total ] = await Promise.all([
+      this.app.mysql.select('pages', {
+        where: otherParams,
+        orders: [[ 'updateTime', 'desc' ]],
+        limit: Number(pageSize),
+        offset: Number(pageSize) * (Number(current) - 1),
+      }),
+      this.app.mysql.count('pages', otherParams),
+    ]);
+    return {
+      code: 0,
+      msg: 'success',
+      data: {
+        total,
+        current,
+        pageSize,
+        data: list,
+      },
+    };
+  }
+
   public async create(name: string) {
-    if (!shell.which('construct')) {
-      this.app.logger.error('construct命令缺失');
-      return {
-        code: 1,
-        msg: '服务construct命令缺失',
-      };
-    }
-
-    const pages = fs.readdirSync(pagesFolderPath);
-    if (pages.includes(name)) {
-      return {
-        code: 1,
-        msg: '页面名重复',
-      };
-    }
-
-    const code = shell.exec(`cd ${pagesFolderPath} && construct -c page -n ${name}`).code;
-    if (code !== 0) {
+    const uid = uuidv3(`${name}${Math.random()}`, uuidv4());
+    const insertRes = await this.app.mysql.insert('pages', {
+      name,
+      url: '',
+      status: 0,
+      updateTime: this.app.mysql.literals.now,
+      createTime: this.app.mysql.literals.now,
+      content: JSON.stringify([]),
+      uid,
+    });
+    if (insertRes.affectedRows === 0) {
       return {
         code: 1,
         msg: '新建页面失败',
       };
-    } else {
-      const result = await this.service.page.construct('development', name, []);
-      return result;
     }
+
+    let code = 1;
+    const tempFilePath = path.resolve(pageDevelopmentPath, './temp');
+    if (fs.existsSync(tempFilePath)) {
+      shell.cd(pageDevelopmentPath);
+      code = shell.cp('-R', 'temp', uid).code;
+    } else {
+      if (!shell.which('construct')) {
+        this.app.logger.error('construct命令缺失');
+        return {
+          code: 1,
+          msg: '服务construct命令缺失',
+        };
+      }
+      code = shell.exec(`cd ${pageDevelopmentPath} && construct -c page -n ${uid}`).code;
+    }
+
+    return {
+      code,
+      msg: code ? '构建失败' : 'success',
+    };
   }
 
-  public async construct(env: string, page: string, components: ConstructParams[]) {
-    const pageFilePath = path.resolve(pagesFolderPath, page);
+  public async delete(id: string) {
+    await this.app.mysql.delete('pages', { id });
+
+    return {
+      code: 0,
+      msg: 'success',
+    };
+  }
+
+  public async construct(env: string, uid: string, components: ConstructParams[]) {
+    const pageFilePath = path.resolve(pageDevelopmentPath, uid);
     const names = [ ...new Set(components.map((item: ConstructParams) => item.name)) ];
 
     let npm = 'npm';
@@ -52,7 +126,7 @@ export default class PageService extends Service {
     }
 
     // 依赖安装
-    let code = shell.exec(`cd ${pageFilePath} && ${npm} i ${names.join(' ')}`).code;
+    let code = shell.exec(`cd ${pageFilePath} && ${npm} i ${names.join(' ')} --save`).code;
     if (code !== 0) {
       return {
         code: 1,
@@ -71,11 +145,20 @@ export default class PageService extends Service {
       return `import ${importName} from '${name}';`;
     }).join('\n');
     content = content.replace('/** replaceholder: import */', componentImport);
+    // 组件调用默认属性拼接
+    await Promise.all(components.map(async (item: ConstructParams) => {
+      const componentConfig = await this.app.mysql.get('components', { nameEn: item.name });
+      let props = item.props;
+      if (!Object.keys(item.props).length) {
+        props = JSON.parse(componentConfig.defaultProps || '{}');
+      }
+      item.props = props;
+    }));
     // 组件调用
     const componentUse = components.map((item: ConstructParams) => {
       if (env === 'development') {
         const importName = changeName(item.name);
-        return `{componentClass: ${importName},\ncomponentName: '${item.name}',\nprops: ${JSON.stringify(item.props)},\nkey: Math.floor(Math.random() * 100000)},`;
+        return `{componentClass: ${importName},\ncomponentName: '${item.name}',\nprops: ${JSON.stringify(item.props)},\nkey: Math.random()},`;
       } else {
         const importName = changeName(item.name);
         const propString = Object.entries(item.props).map(([ key, val ]) => `${key}={${JSON.stringify(val)}}`).join(' ');
@@ -84,7 +167,11 @@ export default class PageService extends Service {
     }).join('\n');
     content = content.replace(`{/** replaceholder: use ${env === 'development' ? 'development' : 'production'} */}`, componentUse);
     fs.writeFileSync(demoFilePath, content, 'utf-8');
-    code = shell.exec(`cd ${pageFilePath} && npm run build`).code;
+    if (env === 'development') {
+      code = shell.exec(`cd ${pageFilePath} && npm run build:dev`).code;
+    } else {
+      code = shell.exec(`cd ${pageFilePath} && npm run build:pro`).code;
+    }
     if (code !== 0) {
       return {
         code: 1,
@@ -98,14 +185,112 @@ export default class PageService extends Service {
         msg: '页面构建失败',
       };
     } else {
-      // todo：将打包过后的html内容作为响应体返回，或者返回一个线上可以访问的地址
-      const libFilePath = path.resolve(pageFilePath, './lib/index.html');
-      const htmlData = fs.readFileSync(libFilePath, 'utf-8');
+      const devFilePath = path.resolve(pageFilePath, './dev/index.html');
+      const htmlData = fs.readFileSync(devFilePath, 'utf-8');
+      // 构建成功以后将页面内容写入数据库
+      const data = await this.app.mysql.get('pages', { uid });
+      if (data && data.id) {
+        await this.app.mysql.update('pages', { id: data.id, content: JSON.stringify(components) });
+      }
+      // 将构建后的内容添加到预览文件夹
       return {
         code: 0,
         data: htmlData,
         msg: 'success',
       };
     }
+  }
+
+  public async getCode(uid: string) {
+    const pageFilePath = path.resolve(pageDevelopmentPath, uid);
+    const htmlFilePath = path.resolve(pageFilePath, './dev/index.html');
+
+    // 存在打包好的文件
+    const isHtmlExists = fs.existsSync(htmlFilePath);
+    if (isHtmlExists) {
+      const data = fs.readFileSync(htmlFilePath, 'utf-8');
+
+      return {
+        code: 0,
+        msg: 'success',
+        data,
+      };
+    }
+
+    // 不存在打包好的文件
+    const data = await this.app.mysql.get('pages', { uid });
+    if (!data || !data.id) {
+      return {
+        code: 1,
+        msg: 'fail',
+      };
+    }
+
+    const result = await this.service.page.construct('development', uid, JSON.parse(data.content || '[]'));
+    return result;
+  }
+
+  public async online({ uid, onlineTime, offlineTime }: { uid: string; onlineTime: string | Date; offlineTime: string | Date; }) {
+    const result: any = await this.service.page.transferPage('online', uid);
+
+    if (result.code !== 0) return result;
+
+    const data = await this.app.mysql.get('pages', { uid });
+    if (data && data.id) {
+      await this.app.mysql.update('pages', { id: data.id, url: result.data, onlineTime, offlineTime, updateTime: this.app.mysql.literals.now });
+      return result;
+    } else {
+      return {
+        code: 1,
+        msg: 'fail',
+      };
+    }
+  }
+
+  public async transferPage(category: string, uid: string) {
+    const data = await this.app.mysql.get('pages', { uid });
+    if (!data || !data.id) {
+      return {
+        code: 1,
+        msg: 'fail',
+      };
+    }
+
+    const reuslt = await this.service.page.construct('production', uid, JSON.parse(data.content || '[]'));
+    if (reuslt.code !== 0) return reuslt;
+
+    const pageDevHtmlPath = path.resolve(pageDevelopmentPath, `./${uid}/pro`);
+    const pageResultPath = path.resolve(category === 'online' ? pageOnlinePath : pagePreviewPath, `./${uid}`);
+    if (fs.existsSync(pagePreviewPath)) await deleteFolder(pageResultPath);
+
+    const code = shell.cp('-R', pageDevHtmlPath, pageResultPath).code;
+    if (code) {
+      return {
+        code,
+        msg: 'fail',
+      };
+    } else {
+      const previewUrl = `${this.app.config.domain}/preview/${uid}/index.html`;
+      const onlineUrl = `http://127.0.0.1:7001/page/check?uid=${uid}`;
+      return {
+        code: 0,
+        msg: 'success',
+        data: category === 'online' ? onlineUrl : previewUrl,
+      };
+    }
+  }
+
+  public async check(uid: string) {
+    const data = await this.app.mysql.get('pages', { uid });
+    if (!data || !data.id) return;
+
+    const { url, onlineTime, offlineTime } = data;
+    const onlineTimeNum = +new Date(onlineTime);
+    const offlineTimeNum = offlineTime ? +new Date(offlineTime) : Infinity;
+    const now = +new Date();
+    if (!url || (onlineTimeNum <= offlineTimeNum && (now > offlineTimeNum || now < onlineTimeNum))) return;
+
+    const pageUrl = `${this.app.config.domain}/online/${uid}/index.html`;
+    return pageUrl;
   }
 }
