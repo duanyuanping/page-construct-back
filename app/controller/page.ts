@@ -61,8 +61,8 @@ export default class extends Controller {
 
     const result = await ctx.service.page.online({
       uid,
-      onlineTime: new Date(Number(onlineTime)),
-      offlineTime: offlineTime ? new Date(Number(offlineTime)) : offlineTime,
+      onlineTime: onlineTime ? new Date(Number(onlineTime)) : null,
+      offlineTime: offlineTime ? new Date(Number(offlineTime)) : null,
     });
 
     ctx.body = result;
@@ -94,8 +94,8 @@ export default class extends Controller {
 
     const result = await ctx.service.page.update(id, {
       name,
-      onlineTime: onlineTime ? new Date(Number(onlineTime)) : onlineTime,
-      offlineTime: offlineTime ? new Date(Number(offlineTime)) : offlineTime,
+      onlineTime: onlineTime ? new Date(Number(onlineTime)) : null,
+      offlineTime: offlineTime ? new Date(Number(offlineTime)) : null,
     });
 
     ctx.body = result;

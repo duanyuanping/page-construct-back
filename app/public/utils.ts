@@ -14,4 +14,4 @@ export async function deleteFolder(path) {
       });
       fs.rmdirSync(path);
   }
-};
+}

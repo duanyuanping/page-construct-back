@@ -67,7 +67,6 @@ const setConfigFn = (app: Application) => {
       method: 'get',
       rule: {
         uid: 'string',
-        onlineTime: 'string',
       },
     },
     '/page/check': {
@@ -120,4 +119,4 @@ export function getConfig(app: Application) {
   });
 
   return routerConfig;
-};
+}

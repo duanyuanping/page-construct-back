@@ -16,7 +16,7 @@ export default class ComponentController extends Controller {
 
   public async editor() {
     const { ctx } = this;
-    const { id, nameCh, nameEn, image, description, props, defaultProps={} } = ctx.request.body;
+    const { id, nameCh, nameEn, image, description, props, defaultProps= {} } = ctx.request.body;
 
     const result = await ctx.service.component.editor({ nameCh, nameEn, image, description }, props, defaultProps, id);
     if (result.affectedRows) {

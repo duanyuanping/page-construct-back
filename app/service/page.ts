@@ -34,7 +34,7 @@ export default class PageService extends Service {
     };
   }
 
-  public async update(id: string, params: { name: string; onlineTime: Date | string; offlineTime: Date | string; }) {
+  public async update(id: string, params: { name: string; onlineTime: Date | null; offlineTime: Date | null; }) {
     await this.app.mysql.update('pages', { id, ...params, updateTime: this.app.mysql.literals.now });
 
     return {
@@ -230,7 +230,7 @@ export default class PageService extends Service {
     return result;
   }
 
-  public async online({ uid, onlineTime, offlineTime }: { uid: string; onlineTime: string | Date; offlineTime: string | Date; }) {
+  public async online({ uid, onlineTime, offlineTime }: { uid: string; onlineTime: null | Date; offlineTime: null | Date; }) {
     const result: any = await this.service.page.transferPage('online', uid);
 
     if (result.code !== 0) return result;

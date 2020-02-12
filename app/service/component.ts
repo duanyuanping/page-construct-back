@@ -9,7 +9,7 @@ interface CreateProps {
 
 export default class ComponentService extends Service {
   public async getList(params: any) {
-    Object.entries(params).forEach(([key, val]) => {
+    Object.entries(params).forEach(([ key, val ]) => {
       if (typeof val !== 'number' && !val) {
         Reflect.deleteProperty(params, key);
       }
@@ -36,7 +36,7 @@ export default class ComponentService extends Service {
   public async editor(params: CreateProps, props, defaultProps, id?: string) {
     const propString = props.map(item => `${item.key},${item.type},${item.desc}`).join(';');
     const defaultPropsString = JSON.stringify(defaultProps);
-    const commonParams = { ...params, props: propString, defaultProps: defaultPropsString }
+    const commonParams = { ...params, props: propString, defaultProps: defaultPropsString };
     let result = { affectedRows: 1 };
 
     if (id) {
