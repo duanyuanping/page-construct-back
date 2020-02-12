@@ -226,6 +226,12 @@ export default class PageService extends Service {
       };
     }
 
+    let npm = 'npm';
+    if (shell.which('cnpm')) {
+      npm = 'cnpm';
+    }
+    shell.exec(`cd ${pageFilePath} && ${npm} i`);
+
     const result = await this.service.page.construct('development', uid, JSON.parse(data.content || '[]'));
     return result;
   }
