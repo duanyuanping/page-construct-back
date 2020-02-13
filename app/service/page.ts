@@ -281,7 +281,7 @@ export default class PageService extends Service {
       };
     } else {
       const previewUrl = `${this.app.config.domain}/preview/${uid}/index.html`;
-      const onlineUrl = `http://127.0.0.1:7001/page/check?uid=${uid}`;
+      const onlineUrl = `${this.app.config.domain}/online/api/page/check?uid=${uid}`;
       return {
         code: 0,
         msg: 'success',

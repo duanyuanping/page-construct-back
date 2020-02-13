@@ -18,7 +18,7 @@ export default (appInfo: EggAppInfo) => {
   };
 
   // 域名
-  config.domain = 'http://www.test.com';
+  config.domain = 'http://construct.walterduan.cn';
 
   // add your special config in here
   const bizConfig = {
