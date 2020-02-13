@@ -126,12 +126,16 @@ export default class PageService extends Service {
     }
 
     // 依赖安装
-    let code = shell.exec(`cd ${pageFilePath} && ${npm} i ${names.join(' ')} --save`).code;
-    if (code !== 0) {
-      return {
-        code: 1,
-        msg: '页面构建失败',
-      };
+    let code = 1;
+    if (names.length && names.length > 0) {
+      code = shell.exec(`cd ${pageFilePath} && ${npm} i ${names.join(' ')} --save`).code;
+
+      if (code !== 0) {
+        return {
+          code: 1,
+          msg: '页面构建失败',
+        };
+      }
     }
 
     // 调用组件
@@ -300,3 +304,4 @@ export default class PageService extends Service {
     return pageUrl;
   }
 }
+
