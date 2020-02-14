@@ -91,6 +91,11 @@ const setConfigFn = (app: Application) => {
         name: 'string',
       },
     },
+    '/temp/update': {
+      cb: controller.temp.update,
+      method: 'post',
+      rule: {},
+    },
   };
 };
 
