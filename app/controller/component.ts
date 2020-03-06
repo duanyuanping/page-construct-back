@@ -32,4 +32,17 @@ export default class ComponentController extends Controller {
     }
 
   }
+
+  public async getDetail() {
+    const { ctx } = this;
+    const { name } = ctx.request.query;
+
+    const result = await ctx.service.component.getDetail(name);
+
+    ctx.body = {
+      code: 0,
+      msg: 'success',
+      data: result,
+    };
+  }
 }

@@ -17,9 +17,6 @@ export default (appInfo: EggAppInfo) => {
     },
   };
 
-  // 域名
-  config.domain = 'http://construct.walterduan.cn';
-
   // add your special config in here
   const bizConfig = {
     sourceUrl: `https://github.com/eggjs/examples/tree/master/${appInfo.name}`,

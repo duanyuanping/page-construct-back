@@ -20,6 +20,9 @@ export default () => {
       // 是否加载到 agent 上，默认关闭
       agent: false,
     },
+
+    // 域名
+    domain: 'http://construct.walterduan.cn',
   };
   return config;
 };
