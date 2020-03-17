@@ -7,13 +7,17 @@ export default class ComponentController extends Controller {
 
     const result = await ctx.service.component.getList({ nameEn: name });
 
-    setTimeout(() => {
-      ctx.body = {
+    await new Promise((res: any) => {
+      setTimeout(() => {
+        res();
+      }, 2000);
+    });
+
+    ctx.body = {
         code : 0,
         data: result,
         msg: 'success',
     };
-    }, 2000);
   }
 
   public async editor() {
