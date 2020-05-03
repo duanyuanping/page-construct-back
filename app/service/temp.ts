@@ -7,9 +7,7 @@ const pageDevelopmentPath = path.resolve(pageFolderPath, './development');
 const tempCacheName = 'temp_cache';
 
 export default class extends Service {
-  public async update(hook: any) {
-    if (!hook.events.includes('push')) return { code: 1 };
-
+  public async update() {
     let npm = 'npm';
     if (shell.which('cnpm')) {
       npm = 'cnpm';
