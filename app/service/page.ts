@@ -117,6 +117,7 @@ export default class PageService extends Service {
   }
 
   public async construct(env: string, uid: string, components: ConstructParams[]) {
+    const pageDB = await this.app.mysql.get('pages', { uid });
     const pageFilePath = path.resolve(pageDevelopmentPath, uid);
     const names = [ ...new Set(components.map((item: ConstructParams) => item.name)) ];
 
@@ -138,6 +139,14 @@ export default class PageService extends Service {
       }
     }
 
+    // 页面title修改
+    if (pageDB && pageDB.name) {
+      const htmlFilePath = path.resolve(pageFilePath, 'index.html');
+      let htmlContent = fs.readFileSync(htmlFilePath, 'utf-8');
+      htmlContent = htmlContent.replace('<!-- replaceholder: title -->', pageDB.name);
+      // console.log(111111111111111111111, htmlContent.)
+      fs.writeFileSync(htmlFilePath, htmlContent, 'utf-8');
+    }
     // 调用组件
     const tempFileName = env === 'development' ? 'demo.temp.dev.js' : 'demo.temp.pro.js';
     const demoTempFilePath = path.resolve(pageFilePath, `./src/${tempFileName}`);
